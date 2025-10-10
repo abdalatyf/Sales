@@ -1,0 +1,119 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - نظام المبيعات</title>
+    
+    <!-- Bootstrap CSS from CDN -->
+    
+    <link rel="stylesheet" href="{% static '/css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static '/css/dashboard.css' %}">
+
+    <!-- Bootstrap Icons -->
+    
+<link rel="stylesheet" href="{% static '/css/bootstrap-icons.min.css' %}">
+   
+</head>
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">
+                <i class="bi bi-shop-window me-2"></i>
+                نظام إدارة المبيعات
+            </a>
+
+            <!-- Branch Switcher Dropdown -->
+            <div class="dropdown ms-auto">
+                <button class="btn btn-outline-primary dropdown-toggle" type="button" id="branchSwitcher" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-shop me-1"></i>
+                    الفرع النشط: فرع القاهرة
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="branchSwitcher">
+                    <!-- This list will be filled dynamically from Django later -->
+                    <li><a class="dropdown-item" href="#">فرع القاهرة</a></li>
+                    <li><a class="dropdown-item" href="#">فرع الإسكندرية</a></li>
+                    <li><a class="dropdown-item" href="#">فرع أسيوط</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Header -->
+    <div class="main-header">
+        <div class="container">
+            <h1>لوحة التحكم الرئيسية</h1>
+            <p class="lead">اختر الإجراء الذي تريد القيام به من القائمة أدناه.</p>
+        </div>
+    </div>
+    
+    <!-- Action Cards Grid -->
+    <div class="container my-5">
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            
+            <!-- Card 1: Add New Receipt -->
+            <div class="col">
+                <div class="action-card primary-action">
+                    <a href="add_receipt.html">
+                        <i class="bi bi-receipt-cutoff icon"></i>
+                        <h5 class="card-title">إضافة وصل بيع جديد</h5>
+                        <p class="card-text">إنشاء فاتورة بيع جديدة وتسجيل بيانات العميل والمنتجات المباعة.</p>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 2: View & Edit Receipts -->
+            <div class="col">
+                <div class="action-card">
+                    <a href="view_edit_receipts.html">
+                        <i class="bi bi-pencil-square icon"></i>
+                        <h5 class="card-title">عرض وتعديل الوصولات</h5>
+                        <p class="card-text">استعراض، بحث، وتعديل جميع وصولات البيع والفواتير السابقة.</p>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Card 3: Manage Inventory -->
+            <div class="col">
+                <div class="action-card">
+                    <a href="#">
+                        <i class="bi bi-boxes icon"></i>
+                        <h5 class="card-title">إدارة المخزون والأصناف</h5>
+                        <p class="card-text">إضافة أصناف جديدة للمخزن وتحديث الكميات المتاحة في الفروع.</p>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Card 4: Reports -->
+            <div class="col">
+                <div class="action-card">
+                     <a href="#">
+                        <i class="bi bi-graph-up-arrow icon"></i>
+                        <h5 class="card-title">التقارير والإحصائيات</h5>
+                        <p class="card-text">عرض تقارير المبيعات، أداء المندوبين، والأصناف الأكثر مبيعًا.</p>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card 5: Settings -->
+            <div class="col">
+                <div class="action-card">
+                    <a href="#">
+                        <i class="bi bi-sliders icon"></i>
+                        <h5 class="card-title">الإعدادات العامة</h5>
+                        <p class="card-text">إدارة بيانات الفروع، المندوبين، وإعدادات النظام الأساسية.</p>
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle from CDN -->
+   <script src="{% static '/js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>
+

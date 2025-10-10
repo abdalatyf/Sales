@@ -1,0 +1,130 @@
+/* cairo-200 - arabic_latin */
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Cairo';
+  font-style: normal;
+  font-weight: 200;
+  src: url('../fonts/cairo-v31-arabic_latin-200.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+/* cairo-300 - arabic_latin */
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Cairo';
+  font-style: normal;
+  font-weight: 300;
+  src: url('../fonts/cairo-v31-arabic_latin-300.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+/* cairo-regular - arabic_latin */
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Cairo';
+  font-style: normal;
+  font-weight: 400;
+  src: url('../fonts/cairo-v31-arabic_latin-regular.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+/* cairo-500 - arabic_latin */
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Cairo';
+  font-style: normal;
+  font-weight: 500;
+  src: url('../fonts/cairo-v31-arabic_latin-500.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+/* cairo-600 - arabic_latin */
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Cairo';
+  font-style: normal;
+  font-weight: 600;
+  src: url('../fonts/cairo-v31-arabic_latin-600.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+/* cairo-700 - arabic_latin */
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Cairo';
+  font-style: normal;
+  font-weight: 700;
+  src: url('../fonts/cairo-v31-arabic_latin-700.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+/* cairo-800 - arabic_latin */
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Cairo';
+  font-style: normal;
+  font-weight: 800;
+  src: url('../fonts/cairo-v31-arabic_latin-800.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+/* cairo-900 - arabic_latin */
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Cairo';
+  font-style: normal;
+  font-weight: 900;
+  src: url('../fonts/cairo-v31-arabic_latin-900.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+body {
+    font-family: 'Cairo', sans-serif;
+    background-color: #f0f2f5;
+}
+.navbar {
+    box-shadow: 0 2px 4px rgba(0,0,0,.08);
+}
+.main-header {
+    background: #ffffff;
+    border-bottom: 1px solid #dee2e6;
+    padding: 2.5rem 0;
+    text-align: center;
+}
+.main-header h1 {
+    font-weight: 700;
+    color: #343a40;
+}
+.main-header p {
+    color: #6c757d;
+    font-size: 1.1rem;
+}
+.action-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.07);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    text-align: center;
+    padding: 1.5rem;
+    background-color: #fff;
+}
+.action-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+.action-card .icon {
+    font-size: 3.5rem;
+    color: #0d6efd;
+    margin-bottom: 1rem;
+    display: block;
+}
+.action-card .card-title {
+    font-weight: 600;
+    color: #495057;
+    font-size: 1.25rem;
+}
+.action-card .card-text {
+    color: #6c757d;
+    font-size: 0.95rem;
+}
+.action-card a {
+    text-decoration: none;
+    color: inherit;
+}
+.action-card a:focus, .action-card a:active {
+    outline: none;
+}
+.action-card.primary-action {
+    background: linear-gradient(135deg, #0d6efd, #0d63e3);
+    color: white;
+}
+.action-card.primary-action .icon,
+.action-card.primary-action .card-title,
+.action-card.primary-action .card-text {
+    color: white;
+}
