@@ -1,0 +1,154 @@
+{% extends 'salesapp/base.html' %}
+{% load static %}
+{% block title %}لوحة التحكم{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static '/css/addreceipt.css}" />
+
+{% endblock %}
+{% block content %}
+
+<main class="main d-flex col-12 col-lg-10 flex-column p-4">
+    <form action="#" method="post" id="receipt-form">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3">إنشاء وصل بيع جديد</h1>
+            <!-- Save button has been moved -->
+        </div>
+
+        <div class="row g-4">
+            <!-- Main Details Column -->
+            <div class="col-lg-7">
+                <!-- Customer Details -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="fa-solid fa-user me-2"></i>بيانات العميل</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="customer_name" class="form-label">اسم العميل</label>
+                                <input type="text" class="form-control" id="customer_name" name="customer_name"
+                                    required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="phone_number" class="form-label">رقم الهاتف</label>
+                                <input type="text" class="form-control" id="phone_number" name="phone_number">
+                            </div>
+                            <div class="col-12">
+                                <label for="address" class="form-label">العنوان</label>
+                                <input type="text" class="form-control" id="address" name="address">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sale Items -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fa-solid fa-boxes-stacked me-2"></i>الأصناف المباعة</h5>
+                        <button type="button" class="btn btn-primary btn-sm" id="add-item-btn"><i
+                                class="fa-solid fa-plus me-1"></i> إضافة صنف</button>
+                    </div>
+                    <div class="card-body p-2">
+                        <table class="table table-sm text-center">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40%;">اسم الصنف</th>
+                                    <th>الكمية</th>
+                                    <th>سعر الوحدة</th>
+                                    <th>الإجمالي</th>
+                                    <th style="width: 5%;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="sale-items-tbody">
+                                <!-- Rows will be added dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Column -->
+            <div class="col-lg-5">
+                <!-- Financial Summary -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="fa-solid fa-coins me-2"></i>الملخص المالي</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <strong>إجمالي الفاتورة</strong>
+                                <span class="summary-value" id="summary-total">٠.٠٠ جنيه</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <label for="down_payment" class="col-form-label"><strong>المقدم المدفوع</strong></label>
+                                <div class="input-group" style="width: 120px;">
+                                    <input type="number" step="0.01" class="form-control" id="down_payment"
+                                        name="down_payment" value="0" min="0">
+                                    <span class="input-group-text">جنيه</span>
+                                </div>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center px-0 pt-3">
+                                <label for="installment_notes" class="form-label"><strong>نظام القسط</strong></label>
+                                <div class="w-75">
+                                    <input type="text" class="form-control" id="installment_notes"
+                                        name="installment_notes" placeholder="اكتب تفاصيل نظام القسط هنا...">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Save Button -->
+                <div class="d-grid mb-4">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="fa-solid fa-save me-2"></i>حفظ الوصل
+                    </button>
+                </div>
+
+                <!-- Receipt Details -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="fa-solid fa-file-invoice me-2"></i>تفاصيل الوصل</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="receipt_number" class="form-label">رقم الوصل</label>
+                                <input type="text" class="form-control bg-light" id="receipt_number"
+                                    name="receipt_number" value="١٠١" readonly>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">تاريخ البيع (شهر/سنة)</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control" name="sale_month" placeholder="الشهر"
+                                        min="1" max="12">
+                                    <span class="input-group-text">/</span>
+                                    <input type="number" class="form-control" name="sale_year" placeholder="السنة"
+                                        min="2000" max="2100">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="area" class="form-label">المنطقة</label>
+                                <input type="text" class="form-control" id="area" name="area">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="salesperson" class="form-label">المندوب</label>
+                                <select class="form-select" id="salesperson" name="salesperson">
+                                    <option selected>اختر مندوب...</option>
+                                    <option value="1">محمد أحمد</option>
+                                    <option value="2">علي محمود</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</main>
+{% endblock %}
+{% block extra_scripts %}
+<script src="{% static '/js/addreceipt.js}"></script>
+
+{% endblock %}

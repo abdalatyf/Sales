@@ -8,4 +8,5 @@ urlpatterns = [
     # views.dashboard_view : الدالة التي سيتم تنفيذها عند زيارة هذا المسار
     # name='dashboard' : اسم مميز لهذا المسار لاستخدامه داخل القوالب لاحقاً
     path('', views.dashboard_view, name='dashboard'),
+    path('/addreceipt/', views.addreceipt_view, name='addreceipt'),
 ]

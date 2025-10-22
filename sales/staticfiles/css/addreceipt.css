@@ -1,0 +1,23 @@
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        /* Styles from original template */
+        .card-header h5 {
+            margin-bottom: 0;
+            font-weight: 600;
+        }
+        .table-sm th, .table-sm td {
+            padding: 0.5rem;
+            vertical-align: middle;
+        }
+        .form-control-sm {
+            height: calc(1.5em + .5rem + 2px);
+            padding: .25rem .5rem;
+            font-size: .875rem;
+        }
+        .summary-value {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
