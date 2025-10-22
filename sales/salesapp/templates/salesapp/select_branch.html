@@ -1,0 +1,35 @@
+{% extends 'salesapp/base.html' %}
+
+{% block title %}اختيار الفرع{% endblock %}
+
+{% block content %}
+<div class="container text-center" style="max-width: 500px;">
+    <div class="card shadow-sm">
+        <div class="card-body p-5">
+            <h1 class="h3 mb-4">الرجاء اختيار الفرع للبدء</h1>
+
+            <div class="d-grid gap-3">
+                {% for branch in branches %}
+                <a href="{% url 'set_branch' branch.id %}" class="btn btn-primary btn-lg">
+                    {{ branch.name }}
+                </a>
+                {% endfor %}
+
+                {% if not branches %}
+                <div class="alert alert-warning" role="alert">
+                    لم يتم إضافة أي فروع بعد. يرجى الذهاب إلى
+                    <a href="{% url 'manage_branches' %}" class="alert-link">الإعدادات</a>
+                    لإضافة فرع.
+                </div>
+                {% endif %}
+            </div>
+
+            {% if request.session.selected_branch_name %}
+            <div class="alert alert-success mt-4">
+                الفرع المختار حالياً: <strong>{{ request.session.selected_branch_name }}</strong>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

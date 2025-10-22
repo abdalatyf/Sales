@@ -1,0 +1,65 @@
+{% extends 'salesapp/base.html' %}
+{% load static %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4 text-center">{{ page_title }}</h1>
+
+<ul class="nav nav-tabs nav-fill mb-4">
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'manage_branches' %}">إدارة الفروع</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'manage_salespersons' %}">إدارة الموظفين</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'manage_products' %}">إدارة المنتجات</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" aria-current="page" href="{% url 'manage_inventory_movements' %}">حركات المخزون</a>
+    </li>
+</ul>
+
+{% if success_message %}
+<div class="alert alert-success" role="alert">
+    {{ success_message }}
+</div>
+{% endif %}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header">
+        <h2 class="h5 mb-0">تسجيل حركة مخزون للفرع الحالي ({{ request.branch.name }})</h2>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{% url 'manage_inventory_movements' %}" class="row g-3 align-items-end">
+            {% csrf_token %}
+            <div class="col-md-5">
+                <label for="product_id" class="form-label">اختر المنتج</label>
+                <select class="form-select" id="product_id" name="product_id" required>
+                    <option value="">-- اختر المنتج --</option>
+                    {% for product in products %}
+                    <option value="{{ product.id }}">
+                        {{ product.name }} (المتاح: {{ product.quantity }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="quantity" class="form-label">الكمية</label>
+                <input type="number" class="form-control" id="quantity" name="quantity" min="1" required>
+            </div>
+            <div class="col-md-3">
+                <label for="movement_type" class="form-label">نوع الحركة</label>
+                <select class="form-select" id="movement_type" name="movement_type" required>
+                    <option value="add">إضافة بضاعة للمخزن (+)</option>
+                    <option value="return">مرتجع للمصنع (-)</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-primary w-100">تنفيذ</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

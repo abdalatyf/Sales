@@ -1,12 +1,20 @@
 from django.urls import path
-from . import views # استيراد ملف views.py من نفس التطبيق
+from . import views
 
-# urlpatterns هي قائمة تحتوي على كل مسارات URL الخاصة بهذا التطبيق
 urlpatterns = [
-    # المسار الأول:
-    # '' : يعني الصفحة الرئيسية (بدون أي شيء بعد اسم الموقع)
-    # views.dashboard_view : الدالة التي سيتم تنفيذها عند زيارة هذا المسار
-    # name='dashboard' : اسم مميز لهذا المسار لاستخدامه داخل القوالب لاحقاً
-    path('', views.dashboard_view, name='dashboard'),
-    path('/addreceipt/', views.addreceipt_view, name='addreceipt'),
-]
+    path('', views.select_branch, name='select_branch'), 
+    path('set_branch/<int:branch_id>/', views.set_branch, name='set_branch'),
+    
+    # روابط الإعدادات
+    path('settings/branches/', views.manage_branches, name='manage_branches'),
+    path('settings/salespersons/', views.manage_salespersons, name='manage_salespersons'),
+    path('settings/products/', views.manage_products, name='manage_products'),
+    
+    # --- (هذه هي الروابط التي كانت ناقصة) ---
+    # روابط الحذف الجديدة
+    path('settings/branches/delete/<int:pk>/', views.delete_branch, name='delete_branch'),
+    path('settings/salespersons/delete/<int:pk>/', views.delete_salesperson, name='delete_salesperson'),
+    path('settings/products/delete/<int:pk>/', views.delete_product, name='delete_product'),
+path('settings/inventory/', views.manage_inventory_movements, name='manage_inventory_movements'),
+path('receipts/add/', views.add_receipt, name='add_receipt'),
+path('receipts/search/', views.search_receipts, name='search_receipts'),]

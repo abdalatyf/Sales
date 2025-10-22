@@ -1,0 +1,75 @@
+{% extends 'salesapp/base.html' %}
+{% load static %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4 text-center">{{ page_title }}</h1>
+
+<ul class="nav nav-tabs nav-fill mb-4">
+    <li class="nav-item">
+        <a class="nav-link active" aria-current="page" href="{% url 'manage_branches' %}">إدارة الفروع</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'manage_salespersons' %}">إدارة الموظفين</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'manage_products' %}">إدارة المنتجات</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'manage_inventory_movements' %}">حركات المخزون</a>
+    </li>
+</ul>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header">
+        <h2 class="h5 mb-0">إضافة فرع جديد</h2>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{% url 'manage_branches' %}" class="row g-3">
+            {% csrf_token %}
+            <div class="col-md-9">
+                <label for="branch_name" class="form-label">اسم الفرع (فريد)</label>
+                <input type="text" class="form-control" id="branch_name" name="branch_name" required>
+            </div>
+            <div class="col-md-3 align-self-end">
+                <button type="submit" class="btn btn-success w-100">حفظ الفرع</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h2 class="h5 mb-0">الفروع المسجلة</h2>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-striped table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th scope="col">الكود (ID)</th>
+                    <th scope="col">اسم الفرع</th>
+                    <th scope="col" class="text-center">إجراء</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for branch in branches %}
+                <tr>
+                    <td>{{ branch.id }}</td>
+                    <td>{{ branch.name }}</td>
+                    <td class="text-center">
+                        <form method="POST" action="{% url 'delete_branch' branch.pk %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger btn-sm">حذف</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="text-center p-4">لم يتم إضافة أي فروع بعد.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

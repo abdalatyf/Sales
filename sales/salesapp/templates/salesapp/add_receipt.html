@@ -1,0 +1,371 @@
+{% extends 'salesapp/base.html' %}
+{% load static %}
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<form method="POST" action="{% url 'add_receipt' %}" id="receipt-form">
+    {% csrf_token %}
+
+    {% if error_message %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ error_message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+    {% if success_message %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ success_message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card shadow-sm mb-4" id="customer-section">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">1. بيانات العميل</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="customer_name" class="form-label">اسم العميل <span id="customer-name-required"
+                                    class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="customer_name" name="customer_name">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone_number" class="form-label">رقم الهاتف <i
+                                    class="bi bi-exclamation-triangle-fill text-warning" id="phone-warning"
+                                    title="اختياري"></i></label>
+                            <input type="text" class="form-control" id="phone_number" name="phone_number">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="address" class="form-label">العنوان</label>
+                            <input type="text" class="form-control" id="address" name="address">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">2. المنتجات المباعة <span class="text-danger">*</span></h2>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <div class="row g-3 align-items-end mb-3 flex-shrink-0" id="add-item-row">
+                        <div class="col-md-5">
+                            <label for="product_search" class="form-label">ابحث عن المنتج</label>
+                            <input class="form-control form-control-sm" list="product-list-options" id="product_search"
+                                placeholder="اكتب للبحث...">
+                            <datalist id="product-list-options">
+                                {% for product in products %}
+                                <option value="{{ product.name }}" data-product-id="{{ product.id }}"
+                                    data-max="{{ product.quantity }}" data-name="{{ product.name }}">
+                                    (متاح: {{ product.quantity }})
+                                </option>
+                                {% endfor %}
+                            </datalist>
+                            {# حقل خفي لتخزين ID المنتج المختار، ليس ضرورياً للطريقة الحالية لكن قد نحتاجه #}
+                            {# <input type="hidden" id="selected_product_id"> #}
+                            <div id="product-search-error" class="text-danger mt-1 d-none small">الرجاء اختيار منتج
+                                موجود من القائمة.</div>
+                        </div>
+                        <div class="col-md-2">
+                            <label for="item_quantity" class="form-label">الكمية</label>
+                            <input type="number" class="form-control form-control-sm" id="item_quantity" min="1"
+                                value="1">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="item_price" class="form-label">سعر الوحدة</label>
+                            <input type="number" class="form-control form-control-sm" id="item_price" min="0" value="0">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-info btn-sm w-100" id="add-item-btn">إضافة</button>
+                        </div>
+                    </div>
+
+                    <div class="flex-grow-1" style="overflow-y: auto; max-height: 250px;">
+                        <table class="table table-bordered table-sm" id="items-table">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th>المنتج</th>
+                                    <th class="text-center">كمية</th>
+                                    <th class="text-center">سعر</th>
+                                    <th class="text-center">إجمالي</th>
+                                    <th class="text-center">حذف</th>
+                                </tr>
+                            </thead>
+                            <tbody id="items-table-body"></tbody>
+                        </table>
+                    </div>
+                    <div class="flex-shrink-0 fw-bold fs-5 mt-2">
+                        <div class="row">
+                            <div class="col text-end border-top pt-2">الإجمالي الكلي:</div>
+                            <div class="col-auto text-center border-top pt-2" id="total-amount-display"
+                                style="min-width: 80px;">0</div>
+                            <div class="col-auto" style="width: 50px;"></div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="sale_items_json" id="sale_items_json" value="[]">
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card shadow-sm mb-4" id="payment-section">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">3. بيانات الدفع والحفظ</h2>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-5">
+                            <label for="down_payment" class="form-label">المقدم <i
+                                    class="bi bi-exclamation-triangle-fill text-warning" id="downpayment-warning"
+                                    title="اختياري, افتراضي 0"></i></label>
+                            <input type="number" class="form-control" id="down_payment" name="down_payment" min="0"
+                                value="0">
+                        </div>
+                        <div class="col-md-7">
+                            <label for="installment_system" class="form-label">وصف نظام القسط <span
+                                    id="installment-required" class="text-danger">*</span></label>
+                            <textarea class="form-control" id="installment_system" name="installment_system"
+                                rows="1"></textarea>
+                        </div>
+                    </div>
+                    <div class="mt-auto text-center pt-3">
+                        <button type="submit" class="btn btn-primary btn-lg px-5">حفظ الوصل</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">4. المعلومات الأساسية</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="receipt_number" class="form-label">رقم الوصل (تلقائي)</label>
+                            <input type="text" class="form-control" id="receipt_number" name="receipt_number"
+                                value="{{ next_receipt_number }}" readonly required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="salesperson_id" class="form-label">المندوب (البائع) <span
+                                    class="text-danger">*</span></label>
+                            <select class="form-select" id="salesperson_id" name="salesperson_id" required>
+                                <option value="">-- اختر --</option>
+                                {% for person in salespersons %}
+                                <option value="{{ person.id }}">
+                                    {{ person.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="area" class="form-label">المنطقة</label>
+                            <input type="text" class="form-control" id="area" name="area" value="{{ retained_area }}">
+                        </div>
+                        <div class="col-md-6 d-flex align-items-center justify-content-center pt-4">
+                            <div class="form-check form-switch fs-5">
+                                <input class="form-check-input" type="checkbox" role="switch" id="is_cash_sale"
+                                    name="is_cash_sale">
+                                <label class="form-check-label" for="is_cash_sale">بيع كاش؟</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="sale_year" class="form-label">سنة البيع <span
+                                    class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="sale_year" name="sale_year"
+                                value="{{ default_year }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="sale_month" class="form-label">شهر البيع <span
+                                    class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="sale_month" name="sale_month"
+                                value="{{ default_month }}" min="1" max="12" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</form>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // --- تعريف العناصر ---
+        const cashSaleCheckbox = document.getElementById('is_cash_sale');
+        const customerSection = document.getElementById('customer-section');
+        const paymentSection = document.getElementById('payment-section');
+        const customerNameInput = document.getElementById('customer_name');
+        const customerNameRequired = document.getElementById('customer-name-required');
+        const installmentInput = document.getElementById('installment_system');
+        const installmentRequired = document.getElementById('installment-required');
+        const phoneWarning = document.getElementById('phone-warning');
+        const downPaymentWarning = document.getElementById('downpayment-warning');
+
+        const salespersonSelect = document.getElementById('salesperson_id');
+        const productSearchInput = document.getElementById('product_search');
+        const productListOptions = document.getElementById('product-list-options');
+        const productSearchError = document.getElementById('product-search-error');
+
+        const itemQuantityInput = document.getElementById('item_quantity');
+        const itemPriceInput = document.getElementById('item_price');
+        const addItemBtn = document.getElementById('add-item-btn');
+        const itemsTableBody = document.getElementById('items-table-body');
+        const totalAmountDisplay = document.getElementById('total-amount-display');
+        const saleItemsJsonInput = document.getElementById('sale_items_json');
+        const receiptForm = document.getElementById('receipt-form');
+
+        let saleItems = [];
+
+        // --- وظائف مساعدة ---
+        function calculateTotal() {
+            let total = 0;
+            saleItems.forEach(item => { total += item.quantity * item.price; });
+            totalAmountDisplay.textContent = total;
+            saleItemsJsonInput.value = JSON.stringify(saleItems);
+        }
+        function renderItemsTable() {
+            itemsTableBody.innerHTML = '';
+            saleItems.forEach((item, index) => {
+                const row = document.createElement('tr');
+                row.dataset.productId = item.id;
+                row.innerHTML = `<td>[${item.id}] ${item.name}</td><td class="text-center">${item.quantity}</td><td class="text-center">${item.price}</td><td class="text-center">${item.quantity * item.price}</td><td class="text-center"><button type="button" class="btn btn-danger btn-sm delete-item-btn" data-index="${index}">X</button></td>`;
+                itemsTableBody.appendChild(row);
+            });
+            calculateTotal();
+        }
+        function toggleRequiredFields() {
+            const isCash = cashSaleCheckbox.checked;
+            customerSection.style.display = isCash ? 'none' : 'block';
+            paymentSection.style.display = isCash ? 'none' : 'block';
+            customerNameInput.required = !isCash;
+            installmentInput.required = !isCash;
+            customerNameRequired.style.display = isCash ? 'none' : 'inline';
+            installmentRequired.style.display = isCash ? 'none' : 'inline';
+            phoneWarning.style.display = 'inline';
+            downPaymentWarning.style.display = 'inline';
+        }
+
+        // --- (تم التعديل) البحث عن بيانات المنتج من datalist ---
+        function getSelectedProductData(searchValue) {
+            for (let option of productListOptions.options) {
+                // استخدام trim() وإزالة الكود [id] إذا كان موجوداً للمقارنة بالاسم فقط
+                const optionDisplayValue = option.value.trim();
+                if (optionDisplayValue === searchValue.trim()) {
+                    return {
+                        id: option.dataset.productId,
+                        name: option.dataset.name,
+                        max: parseInt(option.dataset.max)
+                    };
+                }
+            }
+            return null; // لم يتم العثور على تطابق تام
+        }
+
+        // --- ربط الأحداث ---
+        cashSaleCheckbox.addEventListener('change', toggleRequiredFields);
+        toggleRequiredFields();
+
+        addItemBtn.addEventListener('click', function () {
+            const searchValue = productSearchInput.value;
+            const productData = getSelectedProductData(searchValue);
+
+            if (!productData) {
+                productSearchError.classList.remove('d-none');
+                productSearchInput.focus();
+                return;
+            } else {
+                productSearchError.classList.add('d-none');
+            }
+
+            // --- استخلاص البيانات من productData ---
+            const productId = productData.id;
+            const productName = productData.name; // استخدام الاسم من data-name
+            const maxQuantity = productData.max;
+            const quantityToAdd = parseInt(itemQuantityInput.value);
+            const price = parseInt(itemPriceInput.value);
+
+            // --- باقي الكود كما هو ---
+            if (isNaN(quantityToAdd) || quantityToAdd <= 0) { alert('كمية غير صحيحة.'); return; }
+            if (isNaN(price) || price < 0) { alert('سعر غير صحيح.'); return; }
+
+            const existingItemIndex = saleItems.findIndex(item => item.id === productId);
+            let currentAddedQuantity = 0;
+            if (existingItemIndex > -1) {
+                currentAddedQuantity = saleItems[existingItemIndex].quantity;
+            }
+
+            if (quantityToAdd + currentAddedQuantity > maxQuantity) {
+                alert(`الكمية المطلوبة (${quantityToAdd + currentAddedQuantity}) أكبر من المتاح (${maxQuantity}).`);
+                return;
+            }
+
+            if (existingItemIndex > -1) {
+                saleItems[existingItemIndex].quantity += quantityToAdd;
+                saleItems[existingItemIndex].price = price;
+            } else {
+                // التأكد من استخدام productName الصحيح
+                saleItems.push({ id: productId, name: productName, quantity: quantityToAdd, price: price });
+            }
+
+            renderItemsTable();
+            productSearchInput.value = '';
+            itemQuantityInput.value = 1;
+            itemPriceInput.value = 0;
+            productSearchInput.focus();
+        });
+
+        productSearchInput.addEventListener('input', function () {
+            productSearchError.classList.add('d-none');
+        });
+
+        itemsTableBody.addEventListener('click', function (event) {
+            if (event.target.classList.contains('delete-item-btn')) {
+                const indexToRemove = parseInt(event.target.dataset.index);
+                saleItems.splice(indexToRemove, 1);
+                renderItemsTable();
+            }
+        });
+
+        receiptForm.addEventListener('submit', function (event) {
+            if (saleItems.length === 0) {
+                alert("يجب إضافة منتج واحد على الأقل.");
+                event.preventDefault();
+                return false;
+            }
+            saleItemsJsonInput.value = JSON.stringify(saleItems);
+        });
+
+        // --- تفريغ الحقول بعد النجاح ---
+        {% if success_message %}
+        document.getElementById('customer_name').value = '';
+        document.getElementById('phone_number').value = '';
+        document.getElementById('address').value = '';
+        document.getElementById('down_payment').value = '0';
+        document.getElementById('installment_system').value = '';
+        productSearchInput.value = '';
+        itemQuantityInput.value = 1;
+        itemPriceInput.value = 0;
+        saleItems = [];
+        renderItemsTable();
+        document.getElementById('receipt_number').value = '{{ next_receipt_number }}';
+        document.getElementById('sale_year').value = '{{ default_year }}';
+        document.getElementById('sale_month').value = '{{ default_month }}';
+        cashSaleCheckbox.checked = false;
+        toggleRequiredFields();
+        // Note: salesperson and area are intentionally kept
+        {% endif %}
+
+        // --- تحديد المندوب المحفوظ ---
+        const retainedSalespersonIdJS = "{{ retained_salesperson_id }}";
+        if (retainedSalespersonIdJS && salespersonSelect.querySelector(`option[value="${retainedSalespersonIdJS}"]`)) {
+            salespersonSelect.value = retainedSalespersonIdJS;
+        }
+
+    });
+</script>
+{% endblock %}
