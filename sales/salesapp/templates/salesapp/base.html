@@ -44,6 +44,9 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto">
           <li class="nav-item">
+            <a class="nav-link" href="{% url 'dashboard' %}">الرئيسية</a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link" href="{% url 'add_receipt' %}">إضافة وصل</a>
           </li>
           <li class="nav-item">
@@ -76,7 +79,49 @@
   </div>
 
 
-  <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // قاموس التحويل من الإنجليزية إلى العربية
+    const numerals = {
+      '0': '٠', '1': '١', '2': '٢', '3': '٣', '4': '٤',
+      '5': '٥', '6': '٦', '7': '٧', '8': '٨', '9': '٩'
+    };
+
+    function convertToArabic(inputVal) {
+      // استبدال كل رقم إنجليزي بما يقابله بالعربي
+      return inputVal.replace(/[0-9]/g, (digit) => numerals[digit]);
+    }
+
+    // (تم التعديل هنا)
+    // تطبيق التحويل على كل حقول الأرقام، النصوص، والمناطق النصية
+    const inputsToConvert = document.querySelectorAll(
+      ' input[type="text"], textarea'
+    );
+
+    inputsToConvert.forEach(input => {
+      // التأكد من أنه ليس حقل خاص (مثل كلمة المرور)
+      if (input.type === 'password' || input.type === 'email' || input.type === 'hidden') {
+        return; // نتخطى هذه الحقول
+      }
+
+      // عند الكتابة في الحقل
+      input.addEventListener('input', function (e) {
+        // استثناء حقل البحث عن المنتج من التحويل
+        if (e.target.id === 'product_search') {
+          return;
+        }
+
+        // قم بتحويل القيمة وتحديث الحقل
+        e.target.value = convertToArabic(e.target.value);
+      });
+    });
+  });
+</script>
+</body>
+
+</html>
 </body>
 
 </html>

@@ -1,87 +1,125 @@
 {% extends 'salesapp/base.html' %}
 {% load static %}
-{% block title %}
-لوحة التحكم
-{% endblock %}
-{% block extra_head %}
-<link rel="stylesheet" href="{% static '/css/dashboard.css' %}" />
-<!-- Page-specific CSS will go here -->
-{% endblock %}
+{% block title %}{{ page_title }}{% endblock %}
+
 {% block content %}
+<h1 class="h3 mb-4 text-center">{{ page_title }} - فرع ({{ request.branch.name }})</h1>
 
-<!-- Main Header -->
-<div class="main-header mb-5">
-    <div class="container">
-        <h1>لوحة التحكم الرئيسية</h1>
-        <p class="lead">اختر الإجراء الذي تريد القيام به من القائمة أدناه.</p>
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <form method="GET" action="{% url 'dashboard' %}" class="row g-2 align-items-end justify-content-center">
+            <div class="col-auto">
+                <label for="year" class="form-label">السنة</label>
+                <select class="form-select form-select-sm" id="year" name="year">
+                    {% for year in available_years %}
+                    <option value="{{ year }}" {% if selected_year == year %}selected{% endif %}>{{ year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <label for="month" class="form-label">الشهر</label>
+                <select class="form-select form-select-sm" id="month" name="month">
+                    {% for month in available_months %}
+                    <option value="{{ month }}" {% if selected_month == month %}selected{% endif %}>{{ month }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-sm">عرض الإحصائيات</button>
+            </div>
+            <div class="col-auto">
+                {# رابط لعرض الشهر الحالي #}
+                <a href="{% url 'dashboard' %}" class="btn btn-secondary btn-sm">الشهر الحالي</a>
+            </div>
+        </form>
     </div>
 </div>
 
-<!-- Action Cards Grid -->
-<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-    <!-- Card 1: Add New Receipt -->
-    <div class="col">
-        <div class="action-card primary-action">
-            <a href="{% url 'addreceipt' %}">
-                <i class="bi bi-receipt-cutoff icon"></i>
-                <h5 class="card-title">إضافة وصل بيع جديد</h5>
-                <p class="card-text">
-                    إنشاء فاتورة بيع جديدة وتسجيل بيانات العميل والمنتجات المباعة.
-                </p>
-            </a>
+<div class="row g-4">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h2 class="h5 mb-0">ملخص المبيعات ({{ selected_month }}/{{ selected_year }})</h2>
+            </div>
+            <div class="card-body">
+                {% if sales_by_salesperson %}
+                <ul class="list-group list-group-flush">
+                    {% for sp in sales_by_salesperson %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ sp.name }}
+                        <span class="badge bg-primary rounded-pill">{{ sp.total_sales }} ({{ sp.receipt_count }}
+                            وصل)</span>
+                    </li>
+                    {% endfor %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center fw-bold fs-5 bg-light">
+                        الإجمالي الكلي للمبيعات:
+                        <span class="text-primary">{{ total_sales_all }}</span>
+                    </li>
+                </ul>
+                {% else %}
+                <p class="text-center text-muted my-3">لا توجد مبيعات مسجلة لهذا الشهر.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h2 class="h5 mb-0">ملخص الخزينة ({{ selected_month }}/{{ selected_year }})</h2>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        إجمالي المقدمات والكاش (مبيعات جديدة):
+                        <span class="fw-bold">{{ downpayments_and_cash }}</span>
+                    </li>
+                    <li class="list-group-item">
+                        <div class="fw-bold mb-2">إجمالي الأقساط المحصلة (لكل محصل):</div>
+                        {% if collected_installments_by_collector %}
+                        <ul class="list-group list-group-sm">
+                            {% for collector in collected_installments_by_collector %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center border-0 ps-0">
+                                {{ collector.name }}
+                                <span class="badge bg-success rounded-pill">{{ collector.total_collected }} ({{
+                                    collector.installments_count }} قسط)</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <p class="text-center text-muted small my-2">لا توجد أقساط محصلة مسجلة لهذا الشهر.</p>
+                        {% endif %}
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center fw-bold fs-5 bg-light">
+                        إجمالي الخزينة (الأموال الداخلة):
+                        <span class="text-success">{{ total_cash_in }}</span>
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 
-    <!-- Card 2: View & Edit Receipts -->
-    <div class="col">
-        <div class="action-card">
-            <a href="#">
-                <i class="bi bi-pencil-square icon"></i>
-                <h5 class="card-title">عرض وتعديل الوصولات</h5>
-                <p class="card-text">
-                    استعراض، بحث، وتعديل جميع وصولات البيع والفواتير السابقة.
-                </p>
-            </a>
-        </div>
-    </div>
-
-    <!-- Card 3: Manage Inventory -->
-    <div class="col">
-        <div class="action-card">
-            <a href="#">
-                <i class="bi bi-boxes icon"></i>
-                <h5 class="card-title">إدارة المخزون والأصناف</h5>
-                <p class="card-text">
-                    إضافة أصناف جديدة للمخزن وتحديث الكميات المتاحة في الفروع.
-                </p>
-            </a>
-        </div>
-    </div>
-
-    <!-- Card 4: Reports -->
-    <div class="col">
-        <div class="action-card">
-            <a href="#">
-                <i class="bi bi-graph-up-arrow icon"></i>
-                <h5 class="card-title">التقارير والإحصائيات</h5>
-                <p class="card-text">
-                    عرض تقارير المبيعات، أداء المندوبين، والأصناف الأكثر مبيعًا.
-                </p>
-            </a>
-        </div>
-    </div>
-
-    <!-- Card 5: Settings -->
-    <div class="col">
-        <div class="action-card">
-            <a href="#">
-                <i class="bi bi-sliders icon"></i>
-                <h5 class="card-title">الإعدادات العامة</h5>
-                <p class="card-text">
-                    إدارة بيانات الفروع، المندوبين، وإعدادات النظام الأساسية.
-                </p>
-            </a>
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark">
+                <h2 class="h5 mb-0">ملخص الأقساط المتبقية (المستحقة حتى نهاية {{ selected_month }}/{{ selected_year }}
+                    ولم تدفع)</h2>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-6 border-end">
+                        <h3 class="h6">أقساط غير معيّنة لمحصل</h3>
+                        <p class="fs-4 fw-bold mb-1">{{ remaining_unassigned.total }}</p>
+                        <p class="text-muted small">({{ remaining_unassigned.count }} قسط)</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h3 class="h6">أقساط معيّنة (لم تدفع)</h3>
+                        <p class="fs-4 fw-bold mb-1">{{ remaining_assigned_not_paid.total }}</p>
+                        <p class="text-muted small">({{ remaining_assigned_not_paid.count }} قسط)</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
 {% endblock %}

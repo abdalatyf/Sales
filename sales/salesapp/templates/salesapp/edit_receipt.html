@@ -3,7 +3,7 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-<form method="POST" action="{% url 'add_receipt' %}" id="receipt-form">
+<form method="POST" action="{% url 'edit_receipt' receipt.id %}" id="receipt-form">
     {% csrf_token %}
 
     {% if error_message %}
@@ -31,19 +31,19 @@
                             <label for="customer_name" class="form-label">اسم العميل <span id="customer-name-required"
                                     class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="customer_name" name="customer_name"
-                                value="{{ retained_customer_name }}">
+                                value="{{ receipt.customer_name }}">
                         </div>
                         <div class="col-md-6">
                             <label for="phone_number" class="form-label">رقم الهاتف <i
                                     class="bi bi-exclamation-triangle-fill text-warning" id="phone-warning"
                                     title="اختياري"></i></label>
                             <input type="text" class="form-control arabic-numerals" id="phone_number"
-                                name="phone_number" value="{{ retained_phone }}">
+                                name="phone_number" value="{{ receipt.phone_number }}">
                         </div>
                         <div class="col-md-6">
                             <label for="address" class="form-label">العنوان</label>
                             <input type="text" class="form-control arabic-numerals" id="address" name="address"
-                                value="{{ retained_address }}">
+                                value="{{ receipt.address }}">
                         </div>
                     </div>
                 </div>
@@ -99,7 +99,6 @@
                             <tbody id="items-table-body"></tbody>
                         </table>
                     </div>
-
                     <div class="flex-shrink-0 fw-bold fs-5 mt-2">
                         <div class="row">
                             <div class="col text-end border-top pt-2">الإجمالي الكلي:</div>
@@ -109,7 +108,7 @@
                         </div>
                     </div>
                     <input type="hidden" name="sale_items_json" id="sale_items_json"
-                        value="{{ retained_sale_items_json|escape }}">
+                        value="{{ sale_items_json_str|escape }}">
                 </div>
             </div>
         </div>
@@ -126,17 +125,18 @@
                                     class="bi bi-exclamation-triangle-fill text-warning" id="downpayment-warning"
                                     title="اختياري, افتراضي 0"></i></label>
                             <input type="number" class="form-control arabic-numerals" id="down_payment"
-                                name="down_payment" min="0" value="{{ retained_down_payment }}">
+                                name="down_payment" min="0" value="{{ receipt.down_payment }}">
                         </div>
                         <div class="col-md-7">
                             <label for="installment_system" class="form-label">وصف نظام القسط <span
                                     id="installment-required" class="text-danger">*</span></label>
                             <textarea class="form-control arabic-numerals" id="installment_system"
-                                name="installment_system" rows="3">{{ retained_installment_system }}</textarea>
+                                name="installment_system" rows="3">{{ receipt.installment_system }}</textarea>
                         </div>
                     </div>
                     <div class="mt-auto text-center pt-3">
-                        <button type="submit" class="btn btn-primary btn-lg px-5">حفظ الوصل</button>
+                        <button type="submit" class="btn btn-success btn-lg px-5">تحديث الوصل</button>
+                        <a href="{% url 'search_receipts' %}" class="btn btn-secondary btn-lg px-3 ms-2">إلغاء</a>
                     </div>
                 </div>
             </div>
@@ -148,9 +148,9 @@
                 <div class="card-body">
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label for="receipt_number" class="form-label">رقم الوصل (تلقائي)</label>
-                            <input type="text" class="form-control" id="receipt_number"
-                                value="{{ next_receipt_number }}" readonly>
+                            <label for="receipt_number" class="form-label">رقم الوصل</label>
+                            <input type="text" class="form-control" id="receipt_number" name="receipt_number"
+                                value="{{ receipt.receipt_number }}" readonly>
                         </div>
                         <div class="col-md-6">
                             <label for="salesperson_id" class="form-label">المندوب (البائع) <span
@@ -158,19 +158,22 @@
                             <select class="form-select" id="salesperson_id" name="salesperson_id" required>
                                 <option value="">-- اختر --</option>
                                 {% for person in salespersons %}
-                                <option value="{{ person.id }}">{{ person.name }}</option>
+                                <option value="{{ person.id }}" {% if receipt.salesperson_id==person.id %}selected{%
+                                    endif %}>
+                                    {{ person.name }}
+                                </option>
                                 {% endfor %}
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label for="area" class="form-label">المنطقة</label>
                             <input type="text" class="form-control arabic-numerals" id="area" name="area"
-                                value="{{ retained_area }}">
+                                value="{{ receipt.area }}">
                         </div>
                         <div class="col-md-6 d-flex align-items-center justify-content-center pt-4">
                             <div class="form-check form-switch fs-5">
                                 <input class="form-check-input" type="checkbox" role="switch" id="is_cash_sale"
-                                    name="is_cash_sale" {% if retained_is_cash %}checked{% endif %}>
+                                    name="is_cash_sale" {% if receipt.is_cash_sale %}checked{% endif %}>
                                 <label class="form-check-label" for="is_cash_sale">بيع كاش؟</label>
                             </div>
                         </div>
@@ -178,18 +181,19 @@
                             <label for="sale_year" class="form-label">سنة البيع <span
                                     class="text-danger">*</span></label>
                             <input type="number" class="form-control arabic-numerals" id="sale_year" name="sale_year"
-                                value="{{ default_year }}" required>
+                                value="{{ receipt.sale_year }}" required>
                         </div>
                         <div class="col-md-6">
                             <label for="sale_month" class="form-label">شهر البيع <span
                                     class="text-danger">*</span></label>
                             <input type="number" class="form-control arabic-numerals" id="sale_month" name="sale_month"
-                                value="{{ default_month }}" min="1" max="12" required>
+                                value="{{ receipt.sale_month }}" min="1" max="12" required>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
 </form>
 
@@ -221,37 +225,42 @@
         const saleItemsJsonInput = document.getElementById('sale_items_json');
         const receiptForm = document.getElementById('receipt-form');
 
-        // --- (تم الحذف) تم حذف productsTextDisplay ---
-
+        // --- تحميل المنتجات الحالية ---
         let saleItems = [];
-
         try {
             let initialJson = document.getElementById('sale_items_json').value.replace(/&quot;/g, '"');
-            if (initialJson && initialJson !== '[]') {
+            if (initialJson) {
                 saleItems = JSON.parse(initialJson);
-                renderItemsTable();
             }
-        } catch (e) { console.error("خطأ قراءة JSON:", e); saleItems = []; }
+        } catch (e) {
+            console.error("خطأ في قراءة JSON المنتجات الحالية:", e);
+            saleItems = [];
+        }
 
-
-        // --- (تم التعديل) وظيفة حساب الإجمالي ---
+        // --- وظائف مساعدة ---
         function calculateTotal() {
             let total = 0;
-            saleItems.forEach(item => {
-                total += item.quantity * item.price;
-            });
+            saleItems.forEach(item => { total += item.quantity * item.price; });
             totalAmountDisplay.textContent = total;
             saleItemsJsonInput.value = JSON.stringify(saleItems);
-            // --- (تم الحذف) تم حذف السطر الخاص بـ productsTextDisplay ---
         }
 
         function renderItemsTable() {
             itemsTableBody.innerHTML = '';
             saleItems.forEach((item, index) => {
                 const row = document.createElement('tr');
+                // التأكد من أن item.id هو string
                 const itemIdStr = String(item.id);
                 row.dataset.productId = itemIdStr;
-                row.innerHTML = `<td>[${itemIdStr}] ${item.name}</td><td class="text-center">${item.quantity}</td><td class="text-center">${item.price}</td><td class="text-center">${item.quantity * item.price}</td><td class="text-center"><button type="button" class="btn btn-danger btn-sm delete-item-btn" data-index="${index}">X</button></td>`;
+                row.innerHTML = `
+                    <td>[${itemIdStr}] ${item.name}</td>
+                    <td class="text-center">${item.quantity}</td>
+                    <td class="text-center">${item.price}</td>
+                    <td class="text-center">${item.quantity * item.price}</td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-danger btn-sm delete-item-btn" data-index="${index}">X</button>
+                    </td>
+                `;
                 itemsTableBody.appendChild(row);
             });
             calculateTotal();
@@ -284,7 +293,8 @@
 
         // --- ربط الأحداث ---
         cashSaleCheckbox.addEventListener('change', toggleRequiredFields);
-        toggleRequiredFields();
+        toggleRequiredFields(); // التشغيل عند التحميل
+        renderItemsTable(); // عرض المنتجات المحملة لأول مرة
 
         addItemBtn.addEventListener('click', function () {
             const searchValue = productSearchInput.value;
@@ -297,26 +307,35 @@
             } else {
                 productSearchError.classList.add('d-none');
             }
+
             const productId = productData.id;
             const productName = productData.name;
             const maxQuantity = productData.max;
             const quantityToAdd = parseInt(itemQuantityInput.value);
             const price = parseInt(itemPriceInput.value);
+
             if (isNaN(quantityToAdd) || quantityToAdd <= 0) { alert('كمية غير صحيحة.'); return; }
             if (isNaN(price) || price < 0) { alert('سعر غير صحيح.'); return; }
-            const existingItemIndex = saleItems.findIndex(item => String(item.id) === productId);
+
+            const existingItemIndex = saleItems.findIndex(item => String(item.id) === productId); // مقارنة كنصوص
             let currentAddedQuantity = 0;
-            if (existingItemIndex > -1) { currentAddedQuantity = saleItems[existingItemIndex].quantity; }
-            if (quantityToAdd + currentAddedQuantity > maxQuantity) {
-                alert(`الكمية المطلوبة (${quantityToAdd + currentAddedQuantity}) أكبر من المتاح (${maxQuantity}).`);
-                return;
+            if (existingItemIndex > -1) {
+                currentAddedQuantity = saleItems[existingItemIndex].quantity;
             }
+
+            // (ملاحظة: هذا التحقق من المخزون يحتاج تحسين لصفحة التعديل)
+            // if (quantityToAdd + currentAddedQuantity > maxQuantity) {
+            //     alert(`الكمية المطلوبة (${quantityToAdd + currentAddedQuantity}) أكبر من المتاح (${maxQuantity}).`);
+            //     return;
+            // }
+
             if (existingItemIndex > -1) {
                 saleItems[existingItemIndex].quantity += quantityToAdd;
                 saleItems[existingItemIndex].price = price;
             } else {
                 saleItems.push({ id: productId, name: productName, quantity: quantityToAdd, price: price });
             }
+
             renderItemsTable();
             productSearchInput.value = '';
             itemQuantityInput.value = 1;
@@ -345,37 +364,7 @@
             saleItemsJsonInput.value = JSON.stringify(saleItems);
         });
 
-        // --- تفريغ الحقول بعد النجاح ---
-        {% if success_message %}
-        document.getElementById('customer_name').value = '';
-        document.getElementById('phone_number').value = '';
-        document.getElementById('address').value = '';
-        document.getElementById('down_payment').value = '0';
-        document.getElementById('installment_system').value = '';
-        productSearchInput.value = '';
-        itemQuantityInput.value = 1;
-        itemPriceInput.value = 0;
-        saleItems = [];
-        renderItemsTable();
-        document.getElementById('receipt_number').value = '{{ next_receipt_number }}';
-        document.getElementById('sale_year').value = '{{ default_year }}';
-        document.getElementById('sale_month').value = '{{ default_month }}';
-        cashSaleCheckbox.checked = false;
-        toggleRequiredFields();
-        {% endif %}
-
-        // --- كود تمييز خانة القسط عند "الخطأ" ---
-        {% if highlight_installment_system %}
-        const installmentField = document.getElementById('installment_system');
-        installmentField.focus();
-        installmentField.classList.add('is-invalid');
-        {% endif %}
-
-        // --- كود تحديد المندوب المحفوظ ---
-        const retainedSalespersonIdJS = "{{ retained_salesperson_id }}";
-        if (retainedSalespersonIdJS && salespersonSelect.querySelector(`option[value="${retainedSalespersonIdJS}"]`)) {
-            salespersonSelect.value = retainedSalespersonIdJS;
-        }
+        // --- (تم حذف كود تحديد المندوب، لأنه يتم بالـ DTL) ---
     });
 </script>
 {% endblock %}

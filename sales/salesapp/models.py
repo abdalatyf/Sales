@@ -46,8 +46,9 @@ class InventoryItem(models.Model):
 # ==========================================================
 
 class Receipt(models.Model):
-    receipt_number = models.CharField(max_length=50, unique=True, verbose_name="رقم الوصل")
+    receipt_number = models.PositiveIntegerField(verbose_name="رقم الوصل", unique=True, editable=False)
     customer_name = models.CharField(max_length=150, verbose_name="اسم العميل", blank=True)
+    products_text = models.TextField(verbose_name="نص المنتجات (للطباعة)", blank=True, null=True)
     phone_number = models.CharField(max_length=20, blank=True, verbose_name="رقم الهاتف")
     address = models.CharField(max_length=255, blank=True, verbose_name="العنوان")
     area = models.CharField(max_length=100, blank=True, verbose_name="المنطقة")

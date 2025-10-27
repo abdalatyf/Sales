@@ -10,16 +10,13 @@
         <h2 class="h5 mb-0">فلاتر البحث</h2>
     </div>
     <div class="card-body">
-        {# نستخدم GET method للبحث ليظهر الفلتر في الرابط ويسهل مشاركته #}
         <form method="GET" action="{% url 'search_receipts' %}" class="row g-3 align-items-end">
             <div class="col-md-4 col-lg-2">
                 <label for="salesperson" class="form-label">المندوب</label>
                 <select class="form-select form-select-sm" id="salesperson" name="salesperson">
                     <option value="">-- الكل --</option>
                     {% for person in salespersons %}
-                    {# استخدام == لأنه قد يكون string #}
-                    <option value="{{ person.id }}" {% if current_salesperson==person.id|stringformat:"s" %}selected{%
-                        endif %}>
+                    <option value="{{ person.id }}">
                         {{ person.name }}
                     </option>
                     {% endfor %}
@@ -28,29 +25,29 @@
             <div class="col-md-4 col-lg-2">
                 <label for="year" class="form-label">سنة البيع</label>
                 <input type="number" class="form-control form-control-sm" id="year" name="year"
-                    value="{{ current_year|default:'' }}" placeholder="مثال: 2025">
+                    value="{{ request.GET.year|default:'' }}" placeholder="مثال: 2025">
             </div>
             <div class="col-md-4 col-lg-2">
                 <label for="month" class="form-label">شهر البيع</label>
                 <input type="number" class="form-control form-control-sm" id="month" name="month"
-                    value="{{ current_month|default:'' }}" min="1" max="12" placeholder="1-12">
+                    value="{{ request.GET.month|default:'' }}" min="1" max="12" placeholder="1-12">
             </div>
             <div class="col-md-4 col-lg-2">
                 <label for="receipt_from" class="form-label">من رقم وصل</label>
-                <input type="text" class="form-control form-control-sm" id="receipt_from" name="receipt_from"
-                    value="{{ current_receipt_from|default:'' }}">
+                <input type="number" class="form-control form-control-sm" id="receipt_from" name="receipt_from"
+                    value="{{ request.GET.receipt_from|default:'' }}">
             </div>
             <div class="col-md-4 col-lg-2">
                 <label for="receipt_to" class="form-label">إلى رقم وصل</label>
-                <input type="text" class="form-control form-control-sm" id="receipt_to" name="receipt_to"
-                    value="{{ current_receipt_to|default:'' }}">
+                <input type="number" class="form-control form-control-sm" id="receipt_to" name="receipt_to"
+                    value="{{ request.GET.receipt_to|default:'' }}">
             </div>
             <div class="col-md-4 col-lg-2">
                 <label for="customer" class="form-label">اسم العميل (جزء)</label>
                 <input type="text" class="form-control form-control-sm" id="customer" name="customer"
-                    value="{{ current_customer|default:'' }}">
+                    value="{{ request.GET.customer|default:'' }}">
             </div>
-            <div class="col-12 col-lg-auto mt-3 mt-lg-0"> {# أزرار البحث والمسح #}
+            <div class="col-12 col-lg-auto mt-3 mt-lg-0">
                 <button type="submit" class="btn btn-primary btn-sm w-100 mb-2 mb-lg-0">بحث</button>
                 <a href="{% url 'search_receipts' %}" class="btn btn-secondary btn-sm w-100">مسح الفلاتر</a>
             </div>
@@ -62,22 +59,25 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <h2 class="h5 mb-0">نتائج البحث ({{ receipts.paginator.count }} وصل)</h2>
         <div>
-            {# أزرار الطباعة المجمعة ستوضع هنا لاحقاً #}
             <button type="button" class="btn btn-success btn-sm disabled">طباعة مجمعة (Word)</button>
         </div>
     </div>
     <div class="card-body p-0">
-        <div class="table-responsive"> {# لجعل الجدول يتجاوب مع الشاشات الصغيرة #}
-            <table class="table table-striped table-hover mb-0">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover table-sm mb-0" style="font-size: 0.85rem;">
                 <thead class="table-light">
                     <tr>
                         <th scope="col">رقم الوصل</th>
                         <th scope="col">العميل</th>
-                        <th scope="col">التاريخ</th>
-                        <th scope="col">المندوب</th>
+                        <th scope="col">الهاتف</th>
+                        <th scope="col">العنوان</th>
+                        <th scope="col">المنطقة</th>
+                        <th scope="col">المنتجات</th>
                         <th scope="col">الإجمالي</th>
                         <th scope="col">المقدم</th>
-                        <th scope="col">نوع البيع</th>
+                        <th scope="col">نظام القسط</th>
+                        <th scope="col">التاريخ</th>
+                        <th scope="col">المندوب</th>
                         <th scope="col" class="text-center">إجراءات</th>
                     </tr>
                 </thead>
@@ -86,65 +86,62 @@
                     <tr>
                         <td>{{ receipt.receipt_number }}</td>
                         <td>{{ receipt.customer_name|default:"--" }}</td>
-                        <td>{{ receipt.sale_month }}/{{ receipt.sale_year }}</td>
-                        <td>{{ receipt.salesperson.name|default:"--" }}</td>
+                        <td>{{ receipt.phone_number|default:"--" }}</td>
+                        <td>{{ receipt.address|default:"--" }}</td>
+                        <td>{{ receipt.area|default:"--" }}</td>
+                        <td>{{ receipt.products_text|default:"--" }}</td>
                         <td>{{ receipt.total_amount }}</td>
                         <td>{{ receipt.down_payment }}</td>
-                        <td>{% if receipt.is_cash_sale %}كاش{% else %}تقسيط{% endif %}</td>
+                        <td>{% if receipt.is_cash_sale %}كاش{% else %}{{ receipt.installment_system|default:"--" }}{%
+                            endif %}</td>
+                        <td>{{ receipt.sale_month }}/{{ receipt.sale_year }}</td>
+                        <td>{{ receipt.salesperson.name|default:"--" }}</td>
                         <td class="text-center">
-                            {# أزرار التعديل والطباعة الفردية ستوضع هنا #}
-                            <button class="btn btn-warning btn-sm disabled" title="تعديل"><i
-                                    class="bi bi-pencil-fill"></i></button>
+                            <a href="{% url 'edit_receipt' receipt.id %}" class="btn btn-warning btn-sm" title="تعديل">
+                                <i class="bi bi-pencil-fill"></i>
+                            </a>
                             <button class="btn btn-info btn-sm disabled" title="طباعة"><i
                                     class="bi bi-printer-fill"></i></button>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="8" class="text-center p-4">لا توجد وصلات تطابق البحث.</td>
+                        <td colspan="12" class="text-center p-4">لا توجد وصلات تطابق البحث.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
-    {# --- (جديد) أزرار التنقل بين الصفحات --- #}
     {% if receipts.has_other_pages %}
     <div class="card-footer bg-light">
         <nav aria-label="Page navigation">
             <ul class="pagination pagination-sm justify-content-center mb-0">
+                {% with current_params=request.GET.urlencode %}
                 {% if receipts.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?page=1{{ request.GET.urlencode | cut:'page=' | prepend:'&' }}">&laquo;
-                        أول صفحة</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link"
-                        href="?page={{ receipts.previous_page_number }}{{ request.GET.urlencode | cut:'page=' | prepend:'&' }}">السابق</a>
+                <li class="page-item"><a class="page-link" href="?page=1&amp;{{ current_params | cut:'page=' }}">&laquo;
+                        أول صفحة</a></li>
+                <li class="page-item"><a class="page-link"
+                        href="?page={{ receipts.previous_page_number }}&amp;{{ current_params | cut:'page=' }}">السابق</a>
                 </li>
                 {% else %}
                 <li class="page-item disabled"><span class="page-link">&laquo; أول صفحة</span></li>
                 <li class="page-item disabled"><span class="page-link">السابق</span></li>
                 {% endif %}
-
-                <li class="page-item disabled">
-                    <span class="page-link">صفحة {{ receipts.number }} من {{ receipts.paginator.num_pages }}</span>
-                </li>
-
+                <li class="page-item disabled"><span class="page-link">صفحة {{ receipts.number }} من {{
+                        receipts.paginator.num_pages }}</span></li>
                 {% if receipts.has_next %}
-                <li class="page-item">
-                    <a class="page-link"
-                        href="?page={{ receipts.next_page_number }}{{ request.GET.urlencode | cut:'page=' | prepend:'&' }}">التالي</a>
+                <li class="page-item"><a class="page-link"
+                        href="?page={{ receipts.next_page_number }}&amp;{{ current_params | cut:'page=' }}">التالي</a>
                 </li>
-                <li class="page-item">
-                    <a class="page-link"
-                        href="?page={{ receipts.paginator.num_pages }}{{ request.GET.urlencode | cut:'page=' | prepend:'&' }}">آخر
-                        صفحة &raquo;</a>
-                </li>
+                <li class="page-item"><a class="page-link"
+                        href="?page={{ receipts.paginator.num_pages }}&amp;{{ current_params | cut:'page=' }}">آخر صفحة
+                        &raquo;</a></li>
                 {% else %}
                 <li class="page-item disabled"><span class="page-link">التالي</span></li>
                 <li class="page-item disabled"><span class="page-link">آخر صفحة &raquo;</span></li>
                 {% endif %}
+                {% endwith %}
             </ul>
         </nav>
     </div>
@@ -152,5 +149,17 @@
 </div>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const salespersonSelect = document.getElementById('salesperson');
+        // استخدام request.GET للحصول على القيمة الحالية للفلتر
+        const currentSalespersonId = "{{ request.GET.salesperson }}";
+
+        if (currentSalespersonId && salespersonSelect.querySelector(`option[value="${currentSalespersonId}"]`)) {
+            salespersonSelect.value = currentSalespersonId;
+        }
+    });
+</script>
 
 {% endblock %}
