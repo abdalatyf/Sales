@@ -1,0 +1,157 @@
+{% extends 'salesapp/base.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4 text-center">{{ page_title }} - فرع ({{ request.branch.name }})</h1>
+
+{# 1. فلاتر التقرير الزمني #}
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+        <h2 class="h6 mb-0"><i class="bi bi-calendar-range"></i> تحديد الفترة الزمنية للتقرير</h2>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{% url 'reports' %}" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label for="start_date" class="form-label">تاريخ البداية (استحقاق الدفع)</label>
+                <input type="date" class="form-control form-control-sm" id="start_date" name="start_date"
+                    value="{{ start_date }}" required>
+            </div>
+            <div class="col-md-5">
+                <label for="end_date" class="form-label">تاريخ النهاية (استحقاق الدفع)</label>
+                <input type="date" class="form-control form-control-sm" id="end_date" name="end_date"
+                    value="{{ end_date }}" required>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary btn-sm w-100">
+                    <i class="bi bi-graph-up-arrow"></i> عرض التقرير
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{# 2. ملخص التحصيل العام #}
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-success text-white shadow-sm h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <i class="bi bi-wallet2 fa-2x"></i>
+                    </div>
+                    <div class="col">
+                        <div class="text-uppercase small">إجمالي المحصل في الفترة</div>
+                        <div class="h5 mb-0">{{ total_collected_sum|floatformat:2 }} ج.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-warning text-dark shadow-sm h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <i class="bi bi-target fa-2x"></i>
+                    </div>
+                    <div class="col">
+                        <div class="text-uppercase small">إجمالي المستحق في الفترة</div>
+                        <div class="h5 mb-0">{{ total_assigned_sum|floatformat:2 }} ج.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-info text-dark shadow-sm h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-auto">
+                        <i class="bi bi-percent fa-2x"></i>
+                    </div>
+                    <div class="col">
+                        <div class="text-uppercase small">معدل التحصيل الإجمالي</div>
+                        <div class="h5 mb-0">{{ collection_rate|floatformat:2 }}%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# 3. جدول أداء المندوبين #}
+<div class="card shadow-sm">
+    <div class="card-header bg-dark text-white">
+        <h2 class="h6 mb-0">تقرير أداء المندوبين خلال الفترة ({{ start_date }} إلى {{ end_date }})</h2>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle text-center">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">المندوب</th>
+                        <th scope="col">المستحق في الفترة (ج.)</th>
+                        <th scope="col">المُحصَل فعلياً (ج.)</th>
+                        <th scope="col">نسبة التحصيل (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in collector_performance %}
+                    {% if item.collector__name %}
+                    {% with collected=item.collected_amount|default:0 assigned=item.assigned_amount|default:0 %}
+                    <tr {% if collected> assigned|multiply:0.8 %}class="table-success"{% endif %}>
+                        <td>{{ item.collector__name }}</td>
+                        <td>{{ assigned|floatformat:2 }}</td>
+                        <td>{{ collected|floatformat:2 }}</td>
+                        <td>
+                            {% if assigned > 0 %}
+                            {% with rate=(collected|division:assigned|multiply:100) %}
+                            {{ rate|floatformat:2 }}%
+                            {% endwith %}
+                            {% else %}
+                            0.00%
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endwith %}
+                    {% else %}
+                    <tr class="table-secondary">
+                        <td>** أقساط غير مسندة **</td>
+                        <td>{{ item.assigned_amount|floatformat:2 }}</td>
+                        <td>{{ item.collected_amount|floatformat:2 }}</td>
+                        <td>0.00%</td>
+                    </tr>
+                    {% endif %}
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">لا توجد بيانات متاحة في الفترة المحددة.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // التأكد من أن حقل تاريخ النهاية لا يسبق تاريخ البداية
+    document.addEventListener('DOMContentLoaded', function () {
+        const startDateInput = document.getElementById('start_date');
+        const endDateInput = document.getElementById('end_date');
+
+        if (startDateInput && endDateInput) {
+            startDateInput.addEventListener('change', function () {
+                if (startDateInput.value > endDateInput.value) {
+                    endDateInput.value = startDateInput.value;
+                }
+                endDateInput.min = startDateInput.value;
+            });
+        }
+    });
+</script>
+{% endblock %}

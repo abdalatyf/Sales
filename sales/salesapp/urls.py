@@ -11,6 +11,10 @@ urlpatterns = [
     path('settings/salespersons/', views.manage_salespersons, name='manage_salespersons'),
     path('settings/products/', views.manage_products, name='manage_products'),
     path('receipts/edit/<int:receipt_id>/', views.edit_receipt, name='edit_receipt'),
+    path('receipts/print/<int:receipt_id>/', views.print_receipt, name='print_receipt'),
+    path('receipts/print_batch/', views.print_batch_receipts, name='print_batch_receipts'),
+    path('installments/', views.manage_installments, name='manage_installments'),
+    path('reports/', views.reports_view, name='reports'), # <--- أضف هذا السطر
     # --- (هذه هي الروابط التي كانت ناقصة) ---
     # روابط الحذف الجديدة
     path('settings/branches/delete/<int:pk>/', views.delete_branch, name='delete_branch'),

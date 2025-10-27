@@ -53,6 +53,16 @@
             <a class="nav-link" href="{% url 'search_receipts' %}">بحث الوصلات</a>
           </li>
           <li class="nav-item">
+            <a class="nav-link" href="{% url 'manage_installments' %}">
+              <i class="bi bi-cash-coin"></i> تحصيل الأقساط
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}" href="{% url 'reports' %}">
+              <i class="bi bi-graph-up-arrow"></i> التقارير
+            </a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link" href="{% url 'manage_branches' %}">الإعدادات</a>
           </li>
         </ul>

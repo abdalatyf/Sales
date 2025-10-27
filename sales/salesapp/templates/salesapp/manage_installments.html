@@ -1,0 +1,293 @@
+{% extends 'salesapp/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<h1 class="h3 mb-4 text-center">{{ page_title }} - فرع ({{ request.branch.name }})</h1>
+
+{% if error_message %}
+<div class="alert alert-danger">{{ error_message }}</div>
+{% endif %}
+{% if success_message %}
+<div class="alert alert-success">{{ success_message }}</div>
+{% endif %}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+        <h2 class="h6 mb-0"><i class="bi bi-funnel"></i> فلاتر البحث الموحدة</h2>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{% url 'manage_installments' %}" class="row g-3 align-items-end">
+
+            <input type="hidden" name="view" value="{{ view_mode }}">
+
+            <div class="col-md-3">
+                <label for="search_name" class="form-label">اسم العميل/هاتف</label>
+                <input type="text" class="form-control form-control-sm" id="search_name" name="search_name"
+                    value="{{ search_name }}">
+            </div>
+
+            <div class="col-md-3">
+                <label for="search_payment_month" class="form-label">شهر الدفع (الاستحقاق)</label>
+                <select name="search_payment_month" id="search_payment_month" class="form-select form-select-sm">
+                    <option value="">-- كل الشهور --</option>
+                    {% for month in available_payment_months %}
+                    <option value="{{ month }}" {% if search_payment_month == month %}selected{% endif %}>{{ month }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label for="search_sale_month" class="form-label">شهر البيع</label>
+                <select name="search_sale_month" id="search_sale_month" class="form-select form-select-sm">
+                    <option value="">-- كل الشهور --</option>
+                    {% for month in available_sale_months %}
+                    <option value="{{ month }}" {% if search_sale_month == month %}selected{% endif %}>{{ month }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label for="search_area" class="form-label">المنطقة</label>
+                <select name="search_area" id="search_area" class="form-select form-select-sm">
+                    <option value="">-- كل المناطق --</option>
+                    {% for area in available_areas %}
+                    <option value="{{ area }}" {% if search_area == area %}selected{% endif %}>{{ area }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <label for="search_receipt_num_from" class="form-label">رقم الوصل (من)</label>
+                <input type="number" class="form-control form-control-sm" id="search_receipt_num_from"
+                    name="search_receipt_num_from" value="{{ search_receipt_num_from }}" min="1">
+            </div>
+
+            <div class="col-md-2">
+                <label for="search_receipt_num_to" class="form-label">رقم الوصل (إلى)</label>
+                <input type="number" class="form-control form-control-sm" id="search_receipt_num_to"
+                    name="search_receipt_num_to" value="{{ search_receipt_num_to }}" min="1">
+            </div>
+
+            <div class="col-md-3">
+                {# تم تغيير التسمية هنا بناءً على طلبك #}
+                <label for="search_collector_id" class="form-label">المندوب (فلتر اختياري)</label>
+                <select name="search_collector_id" id="search_collector_id" class="form-select form-select-sm">
+                    <option value="">-- الكل (غير مهم) --</option>
+                    <option value="-1" {% if search_collector_id == '-1' %}selected{% endif %}>-- غير مسند بعد --</option>
+                    {# تم دمج الكود الخاطئ في سطر واحد هنا (كما تم تصحيحه في الخطوة السابقة) #}
+                    {% for person in salespersons %}
+                    <option value="{{ person.id }}" {% if search_collector_id|stringformat:"s" == person.id|stringformat:"s" %}selected{% endif %}>
+                        {{ person.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-5">
+                <button type="submit" class="btn btn-primary btn-sm me-2">
+                    <i class="bi bi-funnel-fill"></i> تطبيق الفلاتر
+                </button>
+                <a href="{% url 'manage_installments' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-x-circle-fill"></i> إلغاء الفلاتر
+                </a>
+                <button type="button" class="btn btn-warning btn-sm" id="toggle-view">
+                    {% if view_mode  ==  'assignment' %}
+                    <i class="bi bi-check-circle-fill"></i> وضع التأكيد ({{ installments_for_confirmation }})
+                    {% else %}
+                    <i class="bi bi-person-plus-fill"></i> وضع الإسناد ({{ installments_for_assignment }})
+                    {% endif %}
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+{# نموذج الإسناد الجماعي (Bulk Assignment Form) #}
+<div class="card shadow-sm mb-4" id="bulk-assignment-card" style="display: none;">
+    <div class="card-header bg-success text-white">
+        <h2 class="h6 mb-0">الإسناد الجماعي للأقساط المحددة</h2>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{% url 'manage_installments' %}" id="bulk-assign-form" class="d-flex">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="bulk_assign">
+            <input type="hidden" name="selected_installments_ids" id="bulk-selected-ids">
+
+            <select name="collector_id" class="form-select form-select-sm me-2" required>
+                <option value="" disabled selected>-- اختر المندوب للإسناد --</option>
+                {% for person in salespersons %}
+                <option value="{{ person.id }}">{{ person.name }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-success btn-sm" id="bulk-assign-button" disabled>
+                <i class="bi bi-person-check-fill"></i> إسناد للأقساط المحددة
+            </button>
+        </form>
+    </div>
+</div>
+
+
+{% if view_mode  ==  'assignment' or view_mode  ==  'confirmation' %}
+<div class="table-responsive">
+    <table class="table table-bordered table-hover align-middle">
+        <thead class="table-dark">
+            <tr>
+                <th scope="col" style="width: 5%;">
+                    {# إضافة خانة التحديد الكل هنا #}
+                    <input type="checkbox" id="select-all-checkbox">
+                </th>
+                <th scope="col" style="width: 5%;">رقم القسط</th>
+                <th scope="col" style="width: 15%;">العميل (المنطقة)</th>
+                <th scope="col" style="width: 10%;">قيمة القسط</th>
+                <th scope="col" style="width: 15%;">المبلغ المتبقي</th>
+                <th scope="col" style="width: 10%;">تاريخ الدفع</th>
+                <th scope="col" style="width: 15%;">المندوب الحالي</th>
+                <th scope="col" style="width: 15%;">إجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for inst in installments %}
+            {% with is_overdue=inst.is_overdue %}
+            <tr class="{% if is_overdue %}table-danger{% endif %}">
+                <td>
+                    {# خانة التحديد الفردي #}
+                    <input type="checkbox" class="bulk-select-checkbox" value="{{ inst.id }}">
+                </td>
+                <td>{{ inst.id }}</td>
+                <td>
+                    {{ inst.receipt.customer_name }} ({{ inst.receipt.area }})<br>
+                    <small class="text-muted">{{ inst.receipt.receipt_num }}#</small>
+                </td>
+                <td>{{ inst.amount }} ج.</td>
+                <td>
+                    {{ inst.receipt.remaining_amount }} ج.<br>
+                    <small class="text-muted">مقدم: {{ inst.receipt.paid_amount }} ج.</small>
+                </td>
+                <td>
+                    {{ inst.payment_date|date:"Y-m-d" }}
+                    {% if is_overdue %}
+                    <span class="badge bg-danger">متأخر</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {# عرض اسم المندوب الحالي #}
+                    {% if inst.collector %}
+                    <span class="badge bg-info text-dark">{{ inst.collector.name|default:"غير محدد" }}</span>
+                    {% else %}
+                    <span class="badge bg-secondary">غير مسند</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {# تم حذف حقل الإسناد الفردي بالكامل #}
+                    {% if view_mode  ==  'confirmation' and inst.is_confirmed  ==  False %}
+                    <form method="POST" action="{% url 'manage_installments' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="confirm">
+                        <input type="hidden" name="installment_id" value="{{ inst.id }}">
+                        <button type="submit" class="btn btn-sm btn-success"
+                            onclick="return confirm('هل أنت متأكد من تأكيد تحصيل القسط رقم {{ inst.id }} بمبلغ {{ inst.amount }} ج.؟');">
+                            <i class="bi bi-check-lg"></i> تأكيد التحصيل
+                        </button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endwith %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% else %}
+<p class="text-center text-muted">الرجاء اختيار وضع العرض (إسناد أو تأكيد).</p>
+{% endif %}
+{# *** تم حذف الـ {% endwith %} الزائدة من هنا *** #}
+
+{# تضمين قالب ترقيم الصفحات (Paginator) #}
+{% include "salesapp/includes/paginator.html" with installments=installments %}
+
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const selectAllCheckbox = document.getElementById('select-all-checkbox');
+        const bulkCheckboxes = document.querySelectorAll('.bulk-select-checkbox');
+        const bulkAssignCard = document.getElementById('bulk-assignment-card');
+        const bulkSelectedIdsInput = document.getElementById('bulk-selected-ids');
+        const bulkAssignButton = document.getElementById('bulk-assign-button');
+        const toggleViewButton = document.getElementById('toggle-view');
+
+        // *************** وظيفة التحديد الجماعي (Select All) ***************
+        const updateBulkActionUI = () => {
+            const selected = Array.from(bulkCheckboxes).filter(cb => cb.checked);
+
+            // تحديث حقل الإدخال المخفي بالمعرفات المختارة
+            bulkSelectedIdsInput.value = selected.map(cb => cb.value).join(',');
+
+            // إظهار/إخفاء بطاقة الإسناد الجماعي
+            if (selected.length > 0 && '{{ view_mode }}' === 'assignment') {
+                bulkAssignCard.style.display = 'block';
+                bulkAssignButton.disabled = false;
+            } else {
+                bulkAssignCard.style.display = 'none';
+                bulkAssignButton.disabled = true;
+            }
+        };
+
+        // حدث التحديد/إلغاء التحديد للجميع
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function () {
+                bulkCheckboxes.forEach(cb => {
+                    cb.checked = this.checked;
+                });
+                updateBulkActionUI();
+            });
+        }
+
+        // حدث التحديد/إلغاء التحديد الفردي
+        bulkCheckboxes.forEach(cb => {
+            cb.addEventListener('change', function () {
+                // إذا تم إلغاء تحديد أي خانة، يتم إلغاء تحديد "تحديد الكل"
+                if (!this.checked) {
+                    selectAllCheckbox.checked = false;
+                } else {
+                    // إذا تم تحديد الكل يدوياً، يتم تحديد "تحديد الكل"
+                    if (Array.from(bulkCheckboxes).every(c => c.checked)) {
+                        selectAllCheckbox.checked = true;
+                    }
+                }
+                updateBulkActionUI();
+            });
+        });
+
+        // تشغيل التحديث عند تحميل الصفحة (إذا كانت هناك عناصر محددة مسبقاً)
+        updateBulkActionUI();
+
+
+        // *************** وظيفة تبديل وضع العرض ***************
+        if (toggleViewButton) {
+            toggleViewButton.addEventListener('click', function () {
+                const currentUrl = new URL(window.location.href);
+                let newViewMode = 'assignment';
+
+                if (currentUrl.searchParams.get('view') === 'assignment' || currentUrl.searchParams.get('view') === null) {
+                    newViewMode = 'confirmation';
+                }
+
+                // تغيير وضع العرض وحذف متغير الصفحة للرجوع للصفحة الأولى عند التبديل
+                currentUrl.searchParams.set('view', newViewMode);
+                currentUrl.searchParams.delete('page');
+
+                window.location.href = currentUrl.toString();
+            });
+        }
+    });
+</script>
+{% endblock %}

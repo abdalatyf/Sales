@@ -1,0 +1,64 @@
+{% load i18n %}
+
+{# يتم عرض ترقيم الصفحات فقط إذا كان هناك أكثر من صفحة واحدة #}
+{% if installments.has_other_pages %}
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination pagination-sm justify-content-center">
+
+        {# زر الصفحة السابقة #}
+        {% if installments.has_previous %}
+        <li class="page-item">
+            <a class="page-link"
+                href="?page={{ installments.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' and value %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+                <span class="sr-only">{% translate "Previous" %}</span>
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled">
+            <span class="page-link" aria-hidden="true">&laquo;</span>
+        </li>
+        {% endif %}
+
+        {# عرض نطاق محدود من أرقام الصفحات #}
+        {% for i in installments.paginator.page_range %}
+        {# عرض الصفحة الحالية #}
+        {% if installments.number == i %}
+        <li class="page-item active" aria-current="page"><span class="page-link">{{ i }}</span></li>
+        {# عرض ثلاث صفحات حول الصفحة الحالية، بالإضافة إلى الأولى والأخيرة (لتقليل الروابط المعروضة) #}
+        {% elif i == 1 or i == installments.paginator.num_pages or installments.number|add:'-2' <= i and i
+            <=installments.number|add:'2' %} <li class="page-item">
+            <a class="page-link"
+                href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' and value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{
+                i }}</a>
+            </li>
+            {# إضافة علامة ... لتمثيل الصفحات المحذوفة #}
+            {% elif i == installments.number|add:'-3' or i == installments.number|add:'3' %}
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% endif %}
+            {% endfor %}
+
+            {# زر الصفحة التالية #}
+            {% if installments.has_next %}
+            <li class="page-item">
+                <a class="page-link"
+                    href="?page={{ installments.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' and value %}&{{ key }}={{ value }}{% endif %}{% endfor %}"
+                    aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                    <span class="sr-only">{% translate "Next" %}</span>
+                </a>
+            </li>
+            {% else %}
+            <li class="page-item disabled">
+                <span class="page-link" aria-hidden="true">&raquo;</span>
+            </li>
+            {% endif %}
+
+    </ul>
+</nav>
+
+<p class="text-center text-muted small">
+    تعرض {{ installments.start_index }} - {{ installments.end_index }} من أصل {{ installments.paginator.count }} قسط.
+</p>
+{% endif %}
